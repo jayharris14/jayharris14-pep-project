@@ -1,4 +1,6 @@
 import Controller.SocialMediaController;
+import DAO.SocialMediaDAO;
+import Model.Account;
 import io.javalin.Javalin;
 
 /**
@@ -8,7 +10,10 @@ import io.javalin.Javalin;
 public class Main {
     public static void main(String[] args) {
         SocialMediaController controller = new SocialMediaController();
-        Javalin app = controller.startAPI();
-        app.start(8080);
-    }
+        Javalin app=controller.startAPI();
+        app.start(8008);
+        Mytest mytest=new Mytest();
+        }
+
+    
 }
