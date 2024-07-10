@@ -30,9 +30,9 @@ public class SocialMediaController {
      * @return a Javalin app object which defines the behavior of the Javalin controller.
      */
 
-     SocialMediaService socialmediaservice=new SocialMediaService();
+     SocialMediaService socialmediaservice;
 
-     SocialMediaDAO socialmediadao=new SocialMediaDAO();
+     SocialMediaDAO socialmediadao;
 
     public Javalin startAPI() {
         Javalin app = Javalin.create();
@@ -106,9 +106,7 @@ public class SocialMediaController {
         else{
             context.status(401);
         }
-          
-      
-
+        
     }
 
     private void register(Context context) throws JsonMappingException, JsonProcessingException, SQLException {
@@ -135,7 +133,6 @@ public class SocialMediaController {
         else{
             context.status(400);
         }
-
     }
 
 

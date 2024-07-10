@@ -21,12 +21,11 @@ import Util.ConnectionUtil;
 
 public class SocialMediaDAO {
 
-    Connection connection = ConnectionUtil.getConnection();
 
     public Account insertAccount(Account account){
         
-    Connection connection = ConnectionUtil.getConnection();
     try {
+        Connection connection = ConnectionUtil.getConnection();
         //          Write SQL logic here. You should only be inserting with the name column, so that the database may
         //          automatically generate a primary key.
                     String sql = "INSERT INTO account (username, password) values(?, ?)" ;
