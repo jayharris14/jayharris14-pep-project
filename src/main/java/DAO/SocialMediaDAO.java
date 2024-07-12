@@ -15,30 +15,68 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.h2.jdbc.JdbcSQLNonTransientConnectionException;
+
 import Model.Account;
 import Model.Message;
 import Util.ConnectionUtil;
 
 public class SocialMediaDAO {
 
+    public void deleteMessage(int id){
+        try{
+            Connection connection = ConnectionUtil.getConnection();
+          //          Write SQL logic here. You should only be inserting with the name column, so that the database may
+          //          automatically generate a primary key.
+                      String sql = "Delete * from message where message_id=?" ;
+                      PreparedStatement preparedStatement = connection.prepareStatement(sql);
+          
+                      //write preparedStatement's setString method here.
+          
+                      preparedStatement.setInt(1, id);
+                      
+                      preparedStatement.executeQuery();
+                  }catch(SQLException e){
+                      System.out.println(e.getMessage());
+                  }
+              }
+  
+    public void updateMessage(String message, int id){
+        try{
+            Connection connection = ConnectionUtil.getConnection();
+          //          Write SQL logic here. You should only be inserting with the name column, so that the database may
+          //          automatically generate a primary key.
+                      String sql = "update message set message_text=? where message_id=?" ;
+                      PreparedStatement preparedStatement = connection.prepareStatement(sql);
+          
+                      //write preparedStatement's setString method here.
+                      preparedStatement.setString(1, message);
+                      preparedStatement.setInt(2, id);
+                      
+                      preparedStatement.executeUpdate();
+                  }catch(SQLException e){
+                      System.out.println(e.getMessage());
+                  }
+              }
+    
 
     public Account insertAccount(Account account){
-        
-    try {
-        Connection connection = ConnectionUtil.getConnection();
+            try{
+          Connection connection = ConnectionUtil.getConnection();
         //          Write SQL logic here. You should only be inserting with the name column, so that the database may
         //          automatically generate a primary key.
                     String sql = "INSERT INTO account (username, password) values(?, ?)" ;
-                    PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                    PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         
                     //write preparedStatement's setString method here.
         
                     preparedStatement.setString(1, account.getUsername());
                     preparedStatement.setString(2, account.getPassword());
                     
-                    ResultSet rs = preparedStatement.executeQuery();
-                    while(rs.next()){
-                        int accountid = rs.getInt(1);
+                    preparedStatement.executeUpdate();
+                    ResultSet pkeyResultSet = preparedStatement.getGeneratedKeys();
+                    if(pkeyResultSet.next()){
+                        int accountid = (int) pkeyResultSet.getLong(1);
                         System.out.println(accountid);
                         return new Account(accountid, account.getUsername(), account.getPassword());
                     }
@@ -109,7 +147,7 @@ public List<Message> getAllMessages() throws SQLException{
     Statement st=connection.createStatement();
     ResultSet rs=st.executeQuery(query);
 
-    ArrayList<Message> msgs=new ArrayList<Message>();
+    List<Message> msgs=new ArrayList<>();
 try {
     
     while (rs.next()){
@@ -130,6 +168,37 @@ try {
 
     
 }
+
+public List<Message> getMessagesByUserId(int id) throws SQLException{
+    String query="Select * From message where posted_by=?";
+
+    Connection connection = ConnectionUtil.getConnection();
+    PreparedStatement preparedStatement = connection.prepareStatement(query);
+          
+                      //write preparedStatement's setString method here.
+    preparedStatement.setInt(1, id);
+                   
+   ResultSet rs=preparedStatement.executeQuery();
+
+    List<Message> msgs=new ArrayList<>();
+    try{
+    while (rs.next()){
+        msgs.add(
+        new Message(
+        rs.getInt(1),
+        rs.getInt(2),
+        rs.getString(3),
+        rs.getLong(4)
+        )
+        );
+    }
+} catch (SQLException e) {
+    // TODO: handle exception
+}
+
+    return msgs;
+}
+
 
 public Account getAccountByUsername(String username){
     Connection connection = ConnectionUtil.getConnection();
@@ -154,5 +223,33 @@ public Account getAccountByUsername(String username){
     }
     return null;
 }
+
+
+
+public Message getMessageById(int id){
+    Connection connection = ConnectionUtil.getConnection();
+    try {
+        //Write SQL logic here
+        String sql = "select * from message where message_id=?";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+        preparedStatement.setInt(1, id);
+
+        ResultSet rs = preparedStatement.executeQuery();
+        while(rs.next()){
+            Message message = new Message(
+                rs.getInt(1),
+                rs.getInt(2),
+                rs.getString(3),
+                rs.getLong(4)
+                );
+            return message;
+        }
+    }catch(SQLException e){
+        System.out.println(e.getMessage());
+    }
+    return null;
+}
+
 
 }

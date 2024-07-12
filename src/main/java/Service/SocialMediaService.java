@@ -23,9 +23,8 @@ public class SocialMediaService{
         return socialmediaDAO.getAllMessages();
     }
 
-    public Account addAccount(Account account){
-        System.out.println(account.toString());
-        return socialmediaDAO.insertAccount(account);
+    public void addAccount(Account account){
+        socialmediaDAO.insertAccount(account);
     }
 
     public Account getAccountbyUsername(String username){
@@ -35,6 +34,23 @@ public class SocialMediaService{
     public Message addMessage(Message message){
         return socialmediaDAO.insertMessage(message);
     }
+
+    public Message getMessageById(int id){
+        return socialmediaDAO.getMessageById(id);
+    }
+
+    public void deletemessage(int id){
+        socialmediaDAO.deleteMessage(id);
+    }
+    public void updateMessage(String message, int id){
+        socialmediaDAO.updateMessage(message, id);
+    }
+
+    public List<Message> getMessagesByUserId(int id) throws SQLException{
+        return socialmediaDAO.getMessagesByUserId(id);
+    }
+
+    
 
 
 

@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -30,9 +31,9 @@ public class SocialMediaController {
      * @return a Javalin app object which defines the behavior of the Javalin controller.
      */
 
-     SocialMediaService socialmediaservice;
+     SocialMediaService socialmediaservice=new SocialMediaService();
 
-     SocialMediaDAO socialmediadao;
+     SocialMediaDAO socialmediadao=new SocialMediaDAO();
 
     public Javalin startAPI() {
         Javalin app = Javalin.create();
@@ -40,6 +41,11 @@ public class SocialMediaController {
         app.post("/login", this::login);
         app.post("/messages", this::sendmessage);
         app.get("/messages", this::getmessages);
+        app.get("/messages/{message_id}", this::getmessage);
+        app.delete("/messages/{message_id}", this::deletemessage);
+        app.patch("/messages/{message_id}", this::updatemessage);
+        app.get("/accounts/{account_id}/messages", this::getusermessages);
+
         
 
 
@@ -55,8 +61,60 @@ public class SocialMediaController {
      * @throws SQLException 
      */
 
-     private void getmessages(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
+     private void getusermessages(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
         ObjectMapper mapper=new ObjectMapper();
+        int id=Integer.parseInt(Objects.requireNonNull(context.pathParam("account_id")));
+        List<Message> messages=socialmediaservice.getMessagesByUserId(id);
+        context.json(messages);        
+    }
+   
+
+     private void updatemessage(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
+        ObjectMapper mapper=new ObjectMapper();
+        Message message=mapper.readValue(context.body(), Message.class);
+        int id=Integer.parseInt(Objects.requireNonNull(context.pathParam("message_id")));
+        if (socialmediaservice.getMessageById(id)!=null){
+            if (message.getMessage_text()!="" && message.getMessage_text().length()<=255){
+                socialmediaservice.updateMessage(message.getMessage_text(), id);
+                Message imessage=socialmediaservice.getMessageById(id);
+                context.json(imessage);
+            }
+            else{
+                context.status(400);
+            }
+        }
+        else{
+            context.status(400);
+        }
+    }
+     
+     private void getmessage(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
+        ObjectMapper mapper=new ObjectMapper();
+        int id=Integer.parseInt(Objects.requireNonNull(context.pathParam("message_id")));
+        Message imessage=socialmediaservice.getMessageById(id);
+        if (imessage==null){
+            context.json("");
+        }
+        else{
+            context.json(imessage);
+        }
+     }
+
+     private void deletemessage(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
+        ObjectMapper mapper=new ObjectMapper();
+        int id=Integer.parseInt(Objects.requireNonNull(context.pathParam("message_id")));
+        Message imessage=socialmediaservice.getMessageById(id);
+        if (imessage==null){
+            context.json("");
+        }
+        else{
+            socialmediaservice.deletemessage(id);
+            context.json(imessage);
+        }
+    
+     }
+
+     private void getmessages(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
         List<Message> messages=socialmediaservice.getAllMessages();
         context.json(messages);
 
@@ -74,7 +132,7 @@ public class SocialMediaController {
             }
         }
         if (exists==1){
-            if (message.getMessage_text()!=null && message.getMessage_text().length()<=255){
+            if (message.getMessage_text()!="" && message.getMessage_text().length()<=255){
                 Message imessage=socialmediaservice.addMessage(message);
                 context.json(imessage);
             }
@@ -89,24 +147,24 @@ public class SocialMediaController {
 
 
     }
+
+    
     private void login(Context context) throws JsonMappingException, JsonProcessingException, SQLException{
         ObjectMapper mapper=new ObjectMapper();
         Account account=mapper.readValue(context.body(), Account.class);
-        List<Account> iaccounts=socialmediaservice.getAllAccounts();
-        int ilogin=0;
-        for (int i=0; i<iaccounts.size(); i++){
-            if (iaccounts.get(i).getUsername()==account.getUsername() && iaccounts.get(i).getPassword()==account.getPassword()){
-                ilogin=1;
+        if (socialmediaservice.getAccountbyUsername(account.getUsername())!=null){
+            Account iaccount=socialmediaservice.getAccountbyUsername(account.getUsername());
+            System.out.println(iaccount.getUsername()+ " "+ iaccount.getPassword()+ " "+ account.getUsername()+ " "+ account.getPassword());
+            if (iaccount.getPassword().equals(account.getPassword())){
+                context.json(iaccount);
             }
-        }
-        if (ilogin==1){
-           Account iaccount=socialmediaservice.getAccountbyUsername(account.getUsername());
-           context.json(iaccount);
+            else{
+                context.status(401);
+            }
         }
         else{
             context.status(401);
         }
-        
     }
 
     private void register(Context context) throws JsonMappingException, JsonProcessingException, SQLException {
@@ -114,22 +172,16 @@ public class SocialMediaController {
         int check=0;
         List<Account> iaccounts;
         Account account=mapper.readValue(context.body(), Account.class);
-        if (account.getPassword().length()>=4 && account.getUsername().length()>=1){
-                iaccounts=socialmediaservice.getAllAccounts();
-                System.out.println(iaccounts);
-                for (int i=0; i<iaccounts.size(); i++){
-                    if (iaccounts.get(i).getUsername()==account.getUsername()){
-                        check=1;
-                    } 
-                }
-            if(check==0){
-                    Account iaccount=socialmediaservice.addAccount(account);
+        if (account.getPassword().length()>=4 && account.getUsername()!=""){
+                if (socialmediaservice.getAccountbyUsername(account.getUsername())==null){
+                    socialmediaservice.addAccount(account);
+                    Account iaccount=socialmediaservice.getAccountbyUsername(account.getUsername());
                     context.json(iaccount);
+                }
+                else{
+                    context.status(400);  
+                }
             }
-            else{
-                context.status(400);
-            }
-        }
         else{
             context.status(400);
         }
